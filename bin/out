@@ -2,6 +2,6 @@
 set -eu -o pipefail
 exec 3>&1 1>&2
 
-jq . /dev/stdin
+jq . < /dev/stdin | tee /tmp/input
 
-jq '{version}' < /dev/stdin >&3
+jq '{version}' < /tmp/input >&3
