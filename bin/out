@@ -2,6 +2,44 @@
 set -eu -o pipefail
 exec 3>&1 1>&2
 
-jq . < /dev/stdin | tee /tmp/input
+jq . < /dev/stdin > /tmp/input
 
-jq '{version}' < /tmp/input >&3
+SRC=$1
+
+STACK=$(jq -r '.source.stack // empty' /tmp/input)
+
+CAPABILITIES=--capabilities $(jq -r '[.source.capabilties // empty] | flatten | join(" ")' /tmp/input)
+
+TEMPLATE=$(jq -r '.params.template // empty' /tmp/input)
+
+export AWS_ACCESS_KEY_ID=$(jq -r '.source.aws_access_key_id // empty' /tmp/input)
+export AWS_SECRET_ACCESS_KEY=$(jq -r '.source.aws_secret_access_key // empty' /tmp/input)
+export AWS_DEFAULT_REGION=$(jq -r '.source.region // empty' /tmp/input)
+
+if aws cloudformation get-template --stack-name "$STACK" > /tmp/live.json 2> /dev/null; then
+  ACTION=update-stack
+else
+  ACTION=create-stack
+fi
+
+if expr match "$TEMPLATE" '^https\?:' > /dev/null; then
+  UPLOAD="--template-url $TEMPLATE"
+else
+  jq --sort-keys '.TemplateBody' /tmp/live.json > /tmp/cur.json
+  jq --sort-keys . $SRC/$TEMPLATE > /tmp/new.json
+
+  if cmp -s /tmp/cur.json /tmp/new.json; then
+    UPLOAD="--use-previous-template"
+  else
+    UPLOAD="--template-file file://${SRC}/${TEMPLATE}"
+  fi
+fi
+
+echo "aws cloudformation $ACTION \
+  --stack-name "$STACK" $UPLOAD \
+  --parameters ... \
+  $CAPABILITIES \
+  --query 'Stacks[0]' | tee /tmp/output"
+
+# if CREATE_COMPLETE or UPDATE_COMPLETE then output version, otherwise explode
+#jq '{version: {updated: .LastUpdateTime // .CreationTime}}' < /tmp/output >&3
