@@ -60,7 +60,7 @@ fi
 STACK_ID=$(aws cloudformation $ACTION \
   --stack-name "$STACK" $UPLOAD \
   --parameters file:///tmp/stack-params.json \
-  $CAPABILITIES --query 'StackId')
+  $CAPABILITIES --query 'StackId' --output text)
 
 aws cloudformation describe-stack-events \
   --stack-name "$STACK_ID" \
