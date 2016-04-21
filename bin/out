@@ -62,10 +62,10 @@ STACK_ID=$(aws cloudformation $ACTION \
   --parameters file:///tmp/stack-params.json \
   $CAPABILITIES --query 'StackId')
 
-echo "StackId: $STACK_ID"
-
-aws cloudformation wait $WAIT \
-  --stack-name "$STACK"
+aws cloudformation describe-stack-events \
+  --stack-name "$STACK_ID" \
+  --max-items 10 \
+  --query 'StackEvents' | tee /tmp/events.json
 
 
 # if CREATE_COMPLETE or UPDATE_COMPLETE then output version, otherwise explode
