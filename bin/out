@@ -16,8 +16,24 @@ TEMPLATE=$(jq -r '.params.template // empty' /tmp/input)
 
 CAPABILITIES="--capabilities $(jq -r '[.params.capabilities // empty] | flatten | join(" ")' /tmp/input)"
 
-# FIXME: we have to actually suck values from files here
-jq '.params.parameters' /tmp/input > /tmp/params.json
+
+fill_params() {
+  local IPATH=$1
+  local INPUT=$2
+  (echo '{'
+  jq -r "$IPATH"' | to_entries | map([.key, .value | tostring])[] | join(" ")' "$INPUT" | while read KEY FILE; do
+    if [ -f "$FILE" ]; then
+      echo -n '  "'$KEY'": '
+      if jq -M . "$FILE" 2> /dev/null; then :; else
+        echo '"'$(cat "$FILE")'"'
+      fi
+      echo ","
+    else
+      echo '  "'$KEY'": "'$FILE'",'
+    fi
+  done
+  echo '"null":null}') | jq -M 'del(.null)'
+}
 
 
 # Should we upload or reference a template?
@@ -45,6 +61,7 @@ if aws cloudformation get-template --stack-name "$STACK" > /tmp/template.json 2>
     --query 'Stacks[0]' > /tmp/stack.json
 
   # Merge stack parameters with provided parameters
+  fill_params '.params.parameters' /tmp/input > /tmp/params.json
   jq '.Parameters | map({key: .ParameterKey, value: $params[(.ParameterKey)]}) | map({ParameterKey: .key} + if .value then {ParameterValue: .value} else {UsePreviousValue: true} end)' /tmp/stack.json --argfile params /tmp/params.json > /tmp/stack-params.json
 
 else
@@ -52,6 +69,7 @@ else
   WAIT=stack-create-complete
 
   # Produce stack parameters
+  fill_params '.params.create' /tmp/input > /tmp/params.json
   jq 'to_entries | map({ParameterKey: .key, ParameterValue: .value})' /tmp/params.json > /tmp/stack-params.json
 fi
 
