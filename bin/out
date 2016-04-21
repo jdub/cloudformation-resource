@@ -69,7 +69,7 @@ while [ "$COMPLETE" == "false" ]; do
   aws cloudformation describe-stack-events \
     --stack-name "$STACK_ID" \
     --max-items 20 \
-    --query 'StackEvents' | jq 'map(select(.Timestamp > "'$TOUCHED'"))' > /tmp/events.json
+    --query 'StackEvents' | jq 'map(select(.Timestamp > "'$TOUCHED'"))' | tee /tmp/events.json
 
   TOUCHED=$(jq -r '.[0].Timestamp // empty')
   COMPLETE=$(jq -r '.[0].ResourceStatus // empty | endswith("_COMPLETE")')
