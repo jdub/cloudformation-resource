@@ -57,15 +57,29 @@ else
 fi
 
 
+TOUCHED=$(date -u +%FT%T.000Z)
+COMPLETE=false
+
 STACK_ID=$(aws cloudformation $ACTION \
   --stack-name "$STACK" $UPLOAD \
   --parameters file:///tmp/stack-params.json \
   $CAPABILITIES --query 'StackId' --output text)
 
-aws cloudformation describe-stack-events \
-  --stack-name "$STACK_ID" \
-  --max-items 10 \
-  --query 'StackEvents' | tee /tmp/events.json
+while [ "$COMPLETE" == "false" ]; do
+  aws cloudformation describe-stack-events \
+    --stack-name "$STACK_ID" \
+    --max-items 20 \
+    --query 'StackEvents' | jq 'map(select(.Timestamp > "'$TOUCHED'"))' > /tmp/events.json
+
+  TOUCHED=$(jq -r '.[0].Timestamp // empty')
+  COMPLETE=$(jq -r '.[0].ResourceStatus | endswith("_COMPLETE")')
+
+  jq -r 'def pad($l): .[:$l] + ($l - (. | length)) * " "; map([(.ResourceStatus | pad(25)), (.ResourceType | pad(30)), (.LogicalResourceId | pad(25)), .ResourceStatusReason])[] | join(" | ")' /tmp/events.json
+
+  if [ "$COMPLETE" == "false" ]; then
+    sleep 1
+  fi
+done
 
 
 # if CREATE_COMPLETE or UPDATE_COMPLETE then output version, otherwise explode
