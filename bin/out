@@ -20,6 +20,7 @@ CAPABILITIES="--capabilities $(jq -r '[.params.capabilities // empty] | flatten 
 echo -n ".params.parameters: "
 jq '.params.parameters' /tmp/input | tee /tmp/params.json
 
+
 # Should we upload or reference a template?
 if expr match "$TEMPLATE" 'https\?:' > /dev/null; then
   UPLOAD="--template-url $TEMPLATE"
@@ -30,6 +31,7 @@ fi
 # Should we create or update the stack? (Check existence by way of get-template.)
 if aws cloudformation get-template --stack-name "$STACK" > /tmp/template.json 2> /dev/null; then
   ACTION=update-stack
+  WAIT=stack-update-complete
 
   # Should we tell CloudFormation to use the previous template?
   jq --sort-keys '.TemplateBody' /tmp/template.json > /tmp/cur.json
@@ -48,19 +50,25 @@ if aws cloudformation get-template --stack-name "$STACK" > /tmp/template.json 2>
 
 else
   ACTION=create-stack
+  WAIT=stack-create-complete
 
   # Produce stack parameters
   jq 'to_entries | map({ParameterKey: .key, ParameterValue: .value})' /tmp/params.json > /tmp/stack-params.json
 fi
 
 
-aws cloudformation $ACTION \
+STACK_ID=$(aws cloudformation $ACTION \
   --stack-name "$STACK" $UPLOAD \
   --parameters file:///tmp/stack-params.json \
-  $CAPABILITIES \
-  | tee /tmp/output
-  #--query 'Stacks[0]'
+  $CAPABILITIES --query 'StackId')
+
+echo "StackId: $STACK_ID"
+
+aws cloudformation wait $WAIT \
+  --stack-name "$STACK"
+
 
 # if CREATE_COMPLETE or UPDATE_COMPLETE then output version, otherwise explode
-#jq '{version: {updated: .LastUpdateTime // .CreationTime}}' < /tmp/output >&3
-jq '{version}' /tmp/input >&3
+aws cloudformation describe-stacks \
+  --stack-name "$STACK" \
+  --query '{version: {updated: Stacks[0] | LastUpdatedTime || CreationTime }}' >&1 >&3
