@@ -72,7 +72,7 @@ while [ "$COMPLETE" == "false" ]; do
     --query 'StackEvents' | jq 'map(select(.Timestamp > "'$TOUCHED'"))' | tee /tmp/events.json
 
   TOUCHED=$(jq -r '.[0].Timestamp // empty')
-  COMPLETE=$(jq -r '.[0].ResourceStatus // empty | endswith("_COMPLETE")')
+  COMPLETE=$(jq -r '.[0].ResourceStatus // "" | endswith("_COMPLETE")')
 
   jq -r 'def pad($l): .[:$l] + ($l - (. | length)) * " "; map([(.ResourceStatus | pad(25)), (.ResourceType | pad(30)), (.LogicalResourceId | pad(25)), .ResourceStatusReason])[] | join(" | ")' /tmp/events.json
 
