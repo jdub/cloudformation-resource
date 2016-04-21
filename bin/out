@@ -84,4 +84,6 @@ done
 # if CREATE_COMPLETE or UPDATE_COMPLETE then output version, otherwise explode
 aws cloudformation describe-stacks \
   --stack-name "$STACK" \
-  --query '{version: {updated: Stacks[0] | LastUpdatedTime || CreationTime }}' >&3
+  --query 'Stacks[0]' > /tmp/output
+
+jq '{version: {updated: (.LastUpdatedTime // .CreationTime)}, metadata: {StackStatus, CreationTime, Description} | to_entries | map({name: .key, value: .value})}' /tmp/output >&3
