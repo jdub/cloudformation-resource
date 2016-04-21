@@ -17,7 +17,8 @@ TEMPLATE=$(jq -r '.params.template // empty' /tmp/input)
 CAPABILITIES="--capabilities $(jq -r '[.params.capabilities // empty] | flatten | join(" ")' /tmp/input)"
 
 # FIXME: we have to actually suck values from files here
-jq '.params.parameters' /tmp/input > /tmp/params.json
+echo -n ".params.parameters: "
+jq '.params.parameters' /tmp/input | tee /tmp/params.json
 
 # Should we upload or reference a template?
 if expr match "$TEMPLATE" 'https\?:' > /dev/null; then
