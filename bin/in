@@ -14,4 +14,4 @@ aws cloudformation describe-stacks \
   --stack-name "$STACK" \
   --query 'Stacks[0]' > /tmp/output
 
-jq '{version: {updated: (.LastUpdateTime // .CreationTime)}, metadata: {StackStatus, CreationTime, Description} | to_entries | map({name: .key, value: .value})}' < /tmp/output >&3
+jq '{version: {updated: (.LastUpdateTime // .CreationTime)}, metadata: {StackStatus, CreationTime, Description} | to_entries | map({name: .key, value: .value})}' /tmp/output >&3
