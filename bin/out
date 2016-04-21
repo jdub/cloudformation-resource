@@ -73,7 +73,7 @@ while [ "$COMPLETE" == "false" ]; do
   TOUCHED=$(jq -r '.[0].Timestamp // "'$TOUCHED'"' /tmp/events.json)
   COMPLETE=$(jq -r '.[0].ResourceStatus // "" | endswith("_COMPLETE")' /tmp/events.json)
 
-  jq -r 'def pad($l): .[:$l] + ($l - (. | length)) * " "; reverse | map([(.ResourceStatus | pad(25)), (.ResourceType | pad(30)), (.LogicalResourceId | pad(25)), .ResourceStatusReason])[] | join(" | ")' /tmp/events.json
+  jq -r 'def pad($l): .[:$l] + ($l - (. | length)) * " "; reverse | map([(.ResourceStatus | pad(30)), (.ResourceType | pad(30)), (.LogicalResourceId | pad(25)), .ResourceStatusReason])[] | join(" | ")' /tmp/events.json
 
   if [ "$COMPLETE" == "false" ]; then
     sleep 3
