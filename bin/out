@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eux -o pipefail
+set -eu -o pipefail
 exec 3>&1 1>&2
 
 jq . < /dev/stdin > /tmp/input
