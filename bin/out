@@ -25,7 +25,7 @@ fill_params() {
     if [ -f "$FILE" ]; then
       echo -n '  "'$KEY'": '
       if jq -M . "$FILE" 2> /dev/null; then :; else
-        echo '"'$(cat "$FILE")'"'
+        jq -MR '.' "$FILE"
       fi
       echo ","
     else
