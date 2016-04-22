@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu -o pipefail
+set -eux -o pipefail
 exec 3>&1 1>&2
 
 jq . < /dev/stdin > /tmp/input
@@ -32,7 +32,7 @@ fill_params() {
       echo '  "'$KEY'": "'$FILE'",'
     fi
   done
-  echo '"null":null}') | jq -M 'del(.null)'
+  echo '"":null}') | jq -M 'del(."")'
 }
 
 
