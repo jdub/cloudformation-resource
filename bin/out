@@ -29,10 +29,10 @@ fill_params() {
   local INPUT=$2
   (echo '{'
   jq -r "$IPATH"' | to_entries | map([.key, .value | tostring])[] | join(" ")' "$INPUT" | while read KEY FILE; do
-    if [ -f "$FILE" ]; then
+    if [ -f "$SRC/$FILE" ]; then
       echo -n '  "'$KEY'": '
-      if jq -M . "$FILE" 2> /dev/null; then :; else
-        jq -MR '.' "$FILE"
+      if jq -M . "$SRC/$FILE" 2> /dev/null; then :; else
+        jq -MR '.' "$SRC/$FILE"
       fi
       echo ","
     else
