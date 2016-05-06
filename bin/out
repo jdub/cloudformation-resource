@@ -29,6 +29,7 @@ fill_params() {
       fi
       echo ","
     else
+      # FIXME: doesn't deal with arrays/objects
       echo '  "'$KEY'": "'$FILE'",'
     fi
   done
@@ -37,7 +38,7 @@ fill_params() {
 
 
 # Should we upload or reference a template?
-if expr match "$TEMPLATE" 'https\?:' > /dev/null; then
+if expr match "$TEMPLATE" 'http' > /dev/null; then
   UPLOAD="--template-url $TEMPLATE"
 else
   UPLOAD="--template-file file://${SRC}/${TEMPLATE}"
