@@ -93,8 +93,9 @@ while [ "$COMPLETE" == "false" ]; do
   # FIXME: we should probably have a maximum number of iterations to approximate a timeout
 
   COMPLETE=$(jq -r '.[0].ResourceType == "AWS::CloudFormation::Stack" and (.[0].ResourceStatus // "" | (endswith("_COMPLETE") or endswith("_FAILED"))' /tmp/events.json)
+  TOUCHED=$(jq -r '.[0].Timestamp // "'$TOUCHED'"' /tmp/events.json)
+
   if [ "$COMPLETE" == "false" ]; then
-    TOUCHED=$(jq -r '.[0].Timestamp // "'$TOUCHED'"' /tmp/events.json)
     sleep 3
   fi
 done
@@ -105,10 +106,5 @@ if jq -er '.[0].ResourceStatus != "UPDATE_COMPLETE"' > /dev/null; then
   exit 1
 fi
 
-
-# Fetch final state of the stack
-aws cloudformation describe-stacks \
-  --stack-name "$STACK" \
-  --query 'Stacks[0]' > /tmp/output
-
-jq '{version: {updated: (.LastUpdatedTime // .CreationTime)}, metadata: {StackStatus, CreationTime, Description} | to_entries | map({name: .key, value: .value})}' /tmp/output >&3
+# Just output the closest version we've got, the implied get will sort it out
+jq --arg touched "$TOUCHED" '{version: {updated: (if $touched != "" then $touched else (.LastUpdatedTime // .CreationTime) end)}}' /tmp/stack.json >&3
