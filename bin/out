@@ -77,10 +77,17 @@ fi
 TOUCHED=$(date -u +%FT%T.000Z)
 COMPLETE=false
 
-STACK_ID=$(aws cloudformation $ACTION \
-  --stack-name "$STACK" $UPLOAD \
-  --parameters file:///tmp/stack-params.json \
-  $CAPABILITIES --query 'StackId' --output text)
+if STACK_ID=$(aws cloudformation $ACTION \
+    --stack-name "$STACK" $UPLOAD \
+    --parameters file:///tmp/stack-params.json \
+    $CAPABILITIES --query 'StackId' --output text 2> /tmp/stack-output); then :; else
+  cat /tmp/stack-output
+  if grep -q 'No updates are to be performed' /tmp/stack-output; then
+    exit 0
+  else
+    exit 1
+  fi
+fi
 
 while [ "$COMPLETE" == "false" ]; do
   aws cloudformation describe-stack-events \
