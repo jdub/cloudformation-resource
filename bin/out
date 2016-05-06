@@ -61,7 +61,7 @@ if aws cloudformation get-template --stack-name "$STACK" > /tmp/template.json 2>
     --query 'Stacks[0]' > /tmp/stack.json
 
   # Merge stack parameters with provided parameters
-  fill_params '.params.parameters' /tmp/input > /tmp/params.json
+  fill_params '.params.update' /tmp/input > /tmp/params.json
   jq '.Parameters | map({key: .ParameterKey, value: $params[(.ParameterKey)]}) | map({ParameterKey: .key} + if .value then {ParameterValue: .value} else {UsePreviousValue: true} end)' /tmp/stack.json --argfile params /tmp/params.json > /tmp/stack-params.json
 
 else
