@@ -124,8 +124,13 @@ if jq -er '.[0].ResourceStatus != ("CREATE_COMPLETE" | "UPDATE_COMPLETE")' /tmp/
   exit 1
 fi
 
-# FIXME: we really ought to spew the stack outputs
-# - one last describe stack to get the lastupdatetime and outputs
+aws cloudformation describe-stacks \
+  --stack-name "$STACK" \
+  --query 'Stacks[0]' > /tmp/stack.json
 
-# FIXME: Hmm, LastUpdatedTime == start of updates, not timestamp of _COMPLETE
-jq --arg touched "$TOUCHED" '{version: {updated: (if $touched != "" then $touched else (.LastUpdatedTime // .CreationTime) end)}}' /tmp/stack.json >&3
+# Pretty-print stack outputs
+echo
+jq -r '.Outputs | map([.OutputKey, .OutputValue])[] | join(": ")' /tmp/stack.json
+
+# Return create/update time as version
+jq '{version: {updated: (.LastUpdatedTime // .CreationTime)}}' /tmp/stack.json >&3
