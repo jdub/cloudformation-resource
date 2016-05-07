@@ -99,7 +99,7 @@ if STACK_ID=$(aws cloudformation $ACTION \
   fi
 fi
 
-echo "Status                         | Type                           | Logical Resource ID       | Reason"
+echo "Status                         | Type                           | Logical Resource ID            | Reason"
 
 while [ "$COMPLETE" == "false" ]; do
   aws cloudformation describe-stack-events \
@@ -107,7 +107,7 @@ while [ "$COMPLETE" == "false" ]; do
     --max-items 20 \
     --query 'StackEvents' | jq 'map(select(.Timestamp > "'$TOUCHED'"))' > /tmp/events.json
 
-  jq -r 'def pad($l): .[:$l] + ($l - (. | length)) * " "; reverse | map([(.ResourceStatus | pad(30)), (.ResourceType | pad(30)), (.LogicalResourceId | pad(25)), .ResourceStatusReason])[] | join(" | ")' /tmp/events.json
+  jq -r 'def pad($l): .[:$l] + ($l - (. | length)) * " "; reverse | map([(.ResourceStatus | pad(30)), (.ResourceType | pad(30)), (.LogicalResourceId | pad(30)), .ResourceStatusReason])[] | join(" | ")' /tmp/events.json
 
   # FIXME: we should probably have a maximum number of iterations to approximate a timeout
   # FIXME: should we also watch substacks when they come across our log?
