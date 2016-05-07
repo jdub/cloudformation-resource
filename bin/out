@@ -117,7 +117,7 @@ done
 
 
 # We consider anything that wasn't CREATE/UPDATE_COMPLETE to be a failure
-if jq -er '.[0].ResourceStatus != ("CREATE_COMPLETE" | "UPDATE_COMPLETE")' > /dev/null; then
+if jq -er '.[0].ResourceStatus != ("CREATE_COMPLETE" | "UPDATE_COMPLETE")' /tmp/events.json > /dev/null; then
   exit 1
 fi
 
