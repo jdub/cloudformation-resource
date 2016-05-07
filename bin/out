@@ -40,8 +40,10 @@ fill_params() {
 # Should we upload or reference a template?
 if expr match "$TEMPLATE" 'http' > /dev/null; then
   UPLOAD="--template-url $TEMPLATE"
+  REMOTE=true
 else
   UPLOAD="--template-file file://${SRC}/${TEMPLATE}"
+  REMOTE=false
 fi
 
 # Should we create or update the stack? (Check existence by way of get-template.)
@@ -50,11 +52,13 @@ if aws cloudformation get-template --stack-name "$STACK" > /tmp/template.json 2>
   WAIT=stack-update-complete
 
   # Should we tell CloudFormation to use the previous template?
-  jq --sort-keys '.TemplateBody' /tmp/template.json > /tmp/cur.json
-  jq --sort-keys . $SRC/$TEMPLATE > /tmp/new.json
+  if [ $REMOTE == "false" ]; then
+    jq --sort-keys '.TemplateBody' /tmp/template.json > /tmp/cur.json
+    jq --sort-keys . $SRC/$TEMPLATE > /tmp/new.json
 
-  if cmp -s /tmp/cur.json /tmp/new.json; then
-    UPLOAD="--use-previous-template"
+    if cmp -s /tmp/cur.json /tmp/new.json; then
+      UPLOAD="--use-previous-template"
+    fi
   fi
 
   aws cloudformation describe-stacks \
