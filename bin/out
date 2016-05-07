@@ -102,6 +102,8 @@ fi
 echo "Status                         | Type                           | Logical Resource ID            | Reason"
 
 while [ "$COMPLETE" == "false" ]; do
+  sleep 3
+
   aws cloudformation describe-stack-events \
     --stack-name "$STACK_ID" \
     --max-items 20 \
@@ -114,10 +116,6 @@ while [ "$COMPLETE" == "false" ]; do
 
   COMPLETE=$(jq --arg stack "$STACK" -r '.[0].ResourceType == "AWS::CloudFormation::Stack" and .[0].LogicalResourceId == $stack and (.[0].ResourceStatus // "" | (endswith("_COMPLETE") or endswith("_FAILED")))' /tmp/events.json)
   TOUCHED=$(jq -r '.[0].Timestamp // "'$TOUCHED'"' /tmp/events.json)
-
-  if [ "$COMPLETE" == "false" ]; then
-    sleep 3
-  fi
 done
 
 
