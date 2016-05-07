@@ -100,7 +100,7 @@ while [ "$COMPLETE" == "false" ]; do
 
   # FIXME: we should probably have a maximum number of iterations to approximate a timeout
 
-  COMPLETE=$(jq -r '.[0].ResourceType == "AWS::CloudFormation::Stack" and (.[0].ResourceStatus // "" | (endswith("_COMPLETE") or endswith("_FAILED"))' /tmp/events.json)
+  COMPLETE=$(jq -r '.[0].ResourceType == "AWS::CloudFormation::Stack" and (.[0].ResourceStatus // "" | (endswith("_COMPLETE") or endswith("_FAILED")))' /tmp/events.json)
   TOUCHED=$(jq -r '.[0].Timestamp // "'$TOUCHED'"' /tmp/events.json)
 
   if [ "$COMPLETE" == "false" ]; then
