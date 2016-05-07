@@ -46,6 +46,11 @@ else
   REMOTE=false
 fi
 
+# Check local template is valid JSON before doing any network operations
+if [ $REMOTE == "false" ]; then
+  jq . $SRC/$TEMPLATE > /dev/null
+fi
+
 # Should we create or update the stack? (Check existence by way of get-template.)
 if aws cloudformation get-template --stack-name "$STACK" > /tmp/template.json 2> /dev/null; then
   ACTION=update-stack
