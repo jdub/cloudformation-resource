@@ -112,7 +112,7 @@ while [ "$COMPLETE" == "false" ]; do
   # FIXME: we should probably have a maximum number of iterations to approximate a timeout
   # FIXME: should we also watch substacks when they come across our log?
 
-  COMPLETE=$(jq -r '.[0].ResourceType == "AWS::CloudFormation::Stack" and (.[0].ResourceStatus // "" | (endswith("_COMPLETE") or endswith("_FAILED")))' /tmp/events.json)
+  COMPLETE=$(jq --arg stack "$STACK" -r '.[0].ResourceType == "AWS::CloudFormation::Stack" and .[0].LogicalResourceId == $stack and (.[0].ResourceStatus // "" | (endswith("_COMPLETE") or endswith("_FAILED")))' /tmp/events.json)
   TOUCHED=$(jq -r '.[0].Timestamp // "'$TOUCHED'"' /tmp/events.json)
 
   if [ "$COMPLETE" == "false" ]; then
@@ -126,5 +126,8 @@ if jq -er '.[0].ResourceStatus != ("CREATE_COMPLETE" | "UPDATE_COMPLETE")' /tmp/
   exit 1
 fi
 
-# Just output the closest version we've got, the implied get will sort it out
+# FIXME: we really ought to spew the stack outputs
+# - one last describe stack to get the lastupdatetime and outputs
+
+# FIXME: Hmm, LastUpdatedTime == start of updates, not timestamp of _COMPLETE
 jq --arg touched "$TOUCHED" '{version: {updated: (if $touched != "" then $touched else (.LastUpdatedTime // .CreationTime) end)}}' /tmp/stack.json >&3
