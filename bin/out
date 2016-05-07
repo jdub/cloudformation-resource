@@ -90,6 +90,8 @@ if STACK_ID=$(aws cloudformation $ACTION \
   fi
 fi
 
+echo "Status                         | Type                           | Logical Resource ID       | Reason"
+
 while [ "$COMPLETE" == "false" ]; do
   aws cloudformation describe-stack-events \
     --stack-name "$STACK_ID" \
@@ -99,6 +101,7 @@ while [ "$COMPLETE" == "false" ]; do
   jq -r 'def pad($l): .[:$l] + ($l - (. | length)) * " "; reverse | map([(.ResourceStatus | pad(30)), (.ResourceType | pad(30)), (.LogicalResourceId | pad(25)), .ResourceStatusReason])[] | join(" | ")' /tmp/events.json
 
   # FIXME: we should probably have a maximum number of iterations to approximate a timeout
+  # FIXME: should we also watch substacks when they come across our log?
 
   COMPLETE=$(jq -r '.[0].ResourceType == "AWS::CloudFormation::Stack" and (.[0].ResourceStatus // "" | (endswith("_COMPLETE") or endswith("_FAILED")))' /tmp/events.json)
   TOUCHED=$(jq -r '.[0].Timestamp // "'$TOUCHED'"' /tmp/events.json)
@@ -109,8 +112,8 @@ while [ "$COMPLETE" == "false" ]; do
 done
 
 
-# We consider anything that wasn't UPDATE_COMPLETE to be a failure
-if jq -er '.[0].ResourceStatus != "UPDATE_COMPLETE"' > /dev/null; then
+# We consider anything that wasn't CREATE/UPDATE_COMPLETE to be a failure
+if jq -er '.[0].ResourceStatus != ("CREATE_COMPLETE" | "UPDATE_COMPLETE")' > /dev/null; then
   exit 1
 fi
 
