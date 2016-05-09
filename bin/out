@@ -56,6 +56,9 @@ if aws cloudformation get-template --stack-name "$STACK" > /tmp/template.json 2>
   ACTION=update-stack
   WAIT=stack-update-complete
 
+  echo "Updating '$STACK'..."
+  echo
+
   # Should we tell CloudFormation to use the previous template?
   if [ $REMOTE == "false" ]; then
     jq --sort-keys '.TemplateBody' /tmp/template.json > /tmp/cur.json
@@ -77,6 +80,9 @@ if aws cloudformation get-template --stack-name "$STACK" > /tmp/template.json 2>
 else
   ACTION=create-stack
   WAIT=stack-create-complete
+
+  echo "Creating '$STACK'..."
+  echo
 
   # Produce stack parameters
   fill_params '.params.parameters' /tmp/input > /tmp/params.json
