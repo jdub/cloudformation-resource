@@ -126,10 +126,10 @@ done
 
 
 # We consider anything that wasn't CREATE/UPDATE_COMPLETE to be a failure
-if jq -er '.[0].ResourceStatus != ("CREATE_COMPLETE" | "UPDATE_COMPLETE")' /tmp/events.json > /dev/null; then
+#if jq -er '.[0].ResourceStatus != ("CREATE_COMPLETE" | "UPDATE_COMPLETE")' /tmp/events.json > /dev/null; then
   # FIXME: couldn't we say something helpful here?
-  exit 1
-fi
+#  exit 1
+#fi
 
 aws cloudformation describe-stacks \
   --stack-name "$STACK" \
